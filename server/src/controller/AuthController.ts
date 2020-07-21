@@ -1,5 +1,7 @@
+import { generateToken } from './../service/JwtService';
+import { loginRequest } from './../types/auth.d';
 import { bcrypt } from 'bcrypt';
-import { encode } from './../service/BcryptService';
+import { encode, compare } from './../service/BcryptService';
 import express from "express"
 import { registerRequest } from "../types/auth";
 import db from "./../db"
@@ -34,11 +36,22 @@ router.post('/signup', (req, res) => {
 })
 
 router.post('/login', (req, res) => {
-    // password check
+    const { email, password }: loginRequest = req.body
+    db.then(async connection => {
+        // password check
+        const userExisting = await User.findOne({ where: { email } })
+        if (!userExisting) { res.status(401).json({ message: "Please Check Your Email" }).end() }
+        const hashedPassword = userExisting.password
+        const result = compare(password, hashedPassword)
+        if (!result) { res.status(401).json({ message: "Invalid Password" }).end() }
 
-    // create jwt
+        // create jwt
+        const token = generateToken(email)
 
-    // return jwt
+        // return jwt
+        res.status(200).json({ message: "Login Success", token })
+
+    })
 })
 
 export default router;
