@@ -1,18 +1,24 @@
+import { getRepository } from 'typeorm';
+import * as express from "express"
+
 import { generateToken } from './../service/JwtService';
-import { loginRequest } from './../types/auth.d';
-import { bcrypt } from 'bcrypt';
 import { encode, compare } from './../service/BcryptService';
-import express from "express"
+import { loginRequest } from '../types/auth';
 import { registerRequest } from "../types/auth";
+
 import db from "./../db"
-import { User } from "../entity";
+import { User } from "./../entity"
+
 
 const router = express.Router()
+
+
 
 router.post('/signup', (req, res) => {
     const { username, email, password, confirmPassword, role, skills, description }: registerRequest = req.body;
 
     db.then(async connection => {
+        const userRepo = getRepository(User);
         // username check
         const usernameExistingCount = await User.findAndCount({ where: { username } })
         if (usernameExistingCount[1] > 0) { res.status(401).json({ message: "Username Already Exist" }).end() }
@@ -30,9 +36,15 @@ router.post('/signup', (req, res) => {
 
         //save to db
         const newUser = await User.create({ username, email, password: hashedPassword, role, skills, description }).save();
-        res.status(200).json({ message: "You are successfully registered!", user: newUser }).end()
-    })
-
+        // const user = new User()
+        // user.username = username
+        // user.password = hashedPassword
+        // user.role = role
+        // user.skills = skills
+        // user.description = description
+        // await user.save()
+        res.status(200).json({ message: "You are successfully registered!", newUser }).end()
+    }).catch(err => console.log("db err: ", err))
 })
 
 router.post('/login', (req, res) => {
@@ -51,7 +63,7 @@ router.post('/login', (req, res) => {
         // return jwt
         res.status(200).json({ message: "Login Success", token })
 
-    })
+    }).catch(err => console.log("db err: ", err))
 })
 
 export default router;

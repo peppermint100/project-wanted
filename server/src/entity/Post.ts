@@ -1,7 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, ManyToOne, JoinColumn, OneToMany } from "typeorm";
 import { User, Application } from ".";
-import { WantedNumbersOfRole } from "../types/role";
-import { application } from "express";
 
 @Entity()
 export default class Post extends BaseEntity {
@@ -14,23 +12,35 @@ export default class Post extends BaseEntity {
     @Column({ nullable: false })
     content: string;
 
-    @Column({})
-    currentRolesOpenning: WantedNumbersOfRole
+    @Column()
+    devNeeded: number;
 
     @Column()
-    wantedRoles: WantedNumbersOfRole
+    pmNeeded: number;
 
-    @Column({ nullable: false, default: [] })
+    @Column()
+    designNeeded: number;
+
+    @Column()
+    devRecruited: number;
+
+    @Column()
+    pmRecruited: number;
+
+    @Column()
+    designRecruited: number;
+
+    @Column("simple-array")
     wantedSkills: string[];
-
-    @Column({ default: false })
-    isDone: boolean;
 
     @Column()
     ownerId: number;
     @ManyToOne(() => User, user => user.posts)
     @JoinColumn({ name: "ownerId" })
     owner: User
+
+    @Column({ default: false })
+    isDone: boolean;
 
     @OneToMany(() => Application, application => application.post)
     applications: Application[]

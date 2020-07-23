@@ -1,10 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, OneToMany } from "typeorm";
-import { Role } from "./../types/role";
+import { Role } from "../types/role";
 import { Post, Application } from ".";
 
 @Entity()
 export default class User extends BaseEntity {
-
     @PrimaryGeneratedColumn()
     userId: number;
 
@@ -17,13 +16,13 @@ export default class User extends BaseEntity {
     @Column({ nullable: false })
     password: string;
 
-    @Column({ nullable: false, default: "Let's have some fun with side project" })
+    @Column({ nullable: false, default: "have some fun with side project" })
     description: string;
 
-    @Column({ nullable: false, default: [] })
-    role: Role[];
+    @Column()
+    role: Role;
 
-    @Column({ nullable: false, default: [] })
+    @Column("simple-array")
     skills: string[];
 
     @OneToMany(() => Post, post => post.owner)

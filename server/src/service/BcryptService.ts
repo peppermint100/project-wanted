@@ -1,4 +1,5 @@
-import bcrypt, { Error, Hash } from "bcrypt"
+import * as bcrypt from "bcrypt"
+import { Error, Hash } from "bcrypt"
 
 const salt = process.env.BCRYPT_SALT || 10;
 
