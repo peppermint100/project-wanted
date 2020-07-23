@@ -4,12 +4,16 @@ import { Error, Hash } from "bcrypt"
 const salt = process.env.BCRYPT_SALT || 10;
 
 // encode password
-export const encode = (password: string): string | null => {
-    bcrypt.hash(password, salt, (err: Error, hash: Hash) => {
-        if (err) return null;
-        return JSON.stringify(hash);
+export const encode = (password: string): Promise<string> => {
+    let hash: string;
+    return new Promise((resolve, reject) => {
+        bcrypt.hash(password, salt, (err: Error, hash: Hash) => {
+            if (err) reject(err);
+            hash = JSON.stringify(hash);
+            resolve(hash)
+            return;
+        })
     });
-    return null;
 }
 // decode password
 
