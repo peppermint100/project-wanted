@@ -45,7 +45,7 @@ router.post("/accept", (req, res) => {
         const userRole = user.role
         switch (userRole) {
             case Role.DESIGNER:
-                if (post.designRecruited <= post.designNeeded) {
+                if (post.designRecruited >= post.designNeeded) {
                     res.status(406).json({ message: `There's already enough ${Role.DESIGNER}` }).end()
                     return;
                 } else {
@@ -55,7 +55,7 @@ router.post("/accept", (req, res) => {
                     return;
                 }
             case Role.DEVELOPER:
-                if (post.devRecruited <= post.devNeeded) {
+                if (post.devRecruited >= post.devNeeded) {
                     res.status(406).json({ message: `There's already enough ${Role.DEVELOPER}` }).end()
                     return;
                 } else {
@@ -65,7 +65,7 @@ router.post("/accept", (req, res) => {
                     return;
                 }
             case Role.PROJECTMANAGER:
-                if (post.pmRecruited <= post.pmNeeded) {
+                if (post.pmRecruited >= post.pmNeeded) {
                     res.status(406).json({ message: `There's already enough ${Role.PROJECTMANAGER}` }).end()
                     return;
                 } else {
