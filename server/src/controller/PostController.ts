@@ -19,7 +19,7 @@ router.post("/create", (req, res) => {
 
     db.then(async connection => {
         const ownerFound = await User.findAndCount({ username: owner.toString() })
-        if (ownerFound[1] > 1 || ownerFound[1] <= 0) res.status(401).json({ message: "Username Error" }).end()
+        if (ownerFound[1] > 1 || ownerFound[1] <= 0) res.status(406).json({ message: "Username Error" }).end()
 
         const newPost = await Post.create({ title, content, devNeeded, pmNeeded, designNeeded, wantedSkills, owner: ownerFound[0][0] }).save();
         res.status(200).json({ message: "Your Post has been created.", post: newPost })
@@ -38,14 +38,14 @@ router.post("/update", (req, res) => {
     db.then(async connection => {
         // find selected post
         const postFound = await Post.findAndCount({ postId })
-        if (postFound[1] <= 0 || postFound[1] !== 1) res.status(401).json({ message: "Cannot find Post" }).end()
+        if (postFound[1] <= 0 || postFound[1] !== 1) res.status(404).json({ message: "Cannot find Post" }).end()
 
         // check needed exceed current cruited
         const post = postFound[0][0]
         if (post.designRecruited > designNeeded
             || post.devRecruited > devNeeded
             || post.pmRecruited > pmNeeded) {
-            res.status(401).json({ message: "Check Your Recruiutment Status" }).end()
+            res.status(406).json({ message: "Check Your Recruiutment Status" }).end()
         }
 
 
@@ -81,8 +81,28 @@ router.get("/allposts", (req, res) => {
     })
 })
 
-// read post by title
+// read post by postid
+router.get("/:postId", (req, res) => {
+    const { postId } = req.params
+    db.then(async connection => {
+        const postFound = await Post.findAndCount({ postId: parseInt(postId) })
+        if (postFound[1] !== 1) res.status(404).json({ message: "There's no Post" }).end()
 
-// read post by skills
+        res.status(200).json({ message: "Here's Your Post!", post: postFound[0][0] }).end()
+    })
+})
+
+
+// read posts by user
+router.post("/findbyusername", (req, res) => {
+    const { userId } = req.body
+    db.then(async connection => {
+        const posts = await Post.find({ ownerId: parseInt(userId) })
+        const owner = await User.findOne({ userId })
+        res.status(200).json({ message: `Here's ${owner.username}'s Posts!`, posts }).end()
+    })
+})
+
 
 export default router;
+
