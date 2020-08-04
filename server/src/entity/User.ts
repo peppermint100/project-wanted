@@ -13,7 +13,7 @@ export default class User extends BaseEntity {
     @Column({ nullable: false })
     email: string;
 
-    @Column({ nullable: false })
+    @Column({ nullable: false, scale: 70 })
     password: string;
 
     @Column({ nullable: false, default: "have some fun with side project" })

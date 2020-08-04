@@ -21,14 +21,17 @@ export default class Post extends BaseEntity {
     @Column()
     designNeeded: number;
 
-    @Column()
+    @Column({ default: 0 })
     devRecruited: number;
 
-    @Column()
+    @Column({ default: 0 })
     pmRecruited: number;
 
-    @Column()
+    @Column({ default: 0 })
     designRecruited: number;
+
+    @Column({ default: false })
+    isDone: boolean;
 
     @Column("simple-array")
     wantedSkills: string[];
@@ -38,9 +41,6 @@ export default class Post extends BaseEntity {
     @ManyToOne(() => User, user => user.posts)
     @JoinColumn({ name: "ownerId" })
     owner: User
-
-    @Column({ default: false })
-    isDone: boolean;
 
     @OneToMany(() => Application, application => application.post)
     applications: Application[]

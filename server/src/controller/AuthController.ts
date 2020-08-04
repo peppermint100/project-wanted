@@ -9,17 +9,35 @@ import { registerRequest } from "../types/auth";
 
 import db from "./../db"
 import { User } from "./../entity"
+import { CustomError } from "./../exception/customError"
 
 
 const router = express.Router()
 
 router.post('/', (req, res) => {
     const { email, token } = req.headers
-    const slicedToken = token.toString().substring(7,)
-    const result = verifyToken(slicedToken);
-    console.log(result.email)
-    if (email !== result.email) res.status(401).json({ message: "You need to Login" }).end()
-    res.status(200).json({ message: "OK", authorized: true }).end()
+    console.log(email, token)
+    db.then(async connection => {
+        try {
+            const userExisting = await User.findOne({ email: email.toString() })
+            const slicedToken = token.toString().substring(7,)
+            const result = verifyToken(slicedToken);
+            if (email !== result.email) throw new CustomError("이메일이 올바르지 않습니다.")
+
+            const user = {
+                userID: userExisting.userId,
+                username: userExisting.username,
+                email: userExisting.email,
+                role: userExisting.role,
+                skills: userExisting.skills,
+                authenticated: true
+            }
+
+            res.status(200).json({ message: "OK", authorized: true, user })
+        } catch (err) {
+            if (err) res.status(400).json({ err: err.message })
+        }
+    })
 })
 
 router.post('/signup', (req, res) => {
@@ -28,42 +46,47 @@ router.post('/signup', (req, res) => {
     db.then(async connection => {
         // username check
         const usernameExistingCount = await User.findAndCount({ where: { username } })
-        if (usernameExistingCount[1] > 0) { res.status(401).json({ message: "Username Already Exist" }).end() }
+        if (usernameExistingCount[1] > 0) { throw new CustomError("동일한 유저 이름이 존재합니다.") }
 
         // email check
         const emailExistingCount = await User.findAndCount({ where: { email } })
-        if (emailExistingCount[1] > 0) { res.status(401).json({ message: "Email Already Exist" }).end() }
+        if (emailExistingCount[1] > 0) { throw new CustomError("동일한 유저 이메일이 존재합니다.") }
 
         //password confirm check
-        if (password !== confirmPassword) { res.status(401).json({ message: "Password Does not match" }).end() }
+        if (password !== confirmPassword) { throw new CustomError("비밀번호가 일치하지 않습니다.") }
 
         // encode password
         const hashedPassword = await encode(password)
-        if (hashedPassword === null) { res.status(401).json({ message: "Server error when encoding password" }).end() }
+        if (hashedPassword === null) { throw new CustomError("동일한 유저 이메일이 존재합니다") }
 
         //save to db
         const newUser = await User.create({ username, email, password: hashedPassword, role, skills, description }).save();
 
-        res.status(200).json({ message: "You are successfully registered!", newUser }).end()
-    }).catch(err => console.log("db err: ", err))
+        res.json({ message: "You are successfully registered!", newUser, status: 200 })
+    }).catch(err => res.status(400).json({ err: err.message }))
 })
 
 router.post('/login', (req, res) => {
     const { email, password }: loginRequest = req.body
     db.then(async connection => {
         // password check
-        const userExisting = await User.findOne({ where: { email } })
-        if (!userExisting) { res.status(401).json({ message: "Please Check Your Email" }).end() }
-        const hashedPassword = userExisting.password
-        const result = compare(password, hashedPassword)
-        if (!result) { res.status(401).json({ message: "Invalid Password" }).end() }
+        try {
+            const userExisting = await User.findOne({ where: { email } })
+            if (!userExisting) throw new CustomError("유저가 존재하지 않습니다.")
 
-        // create jwt
-        const bearer = 'bearer '
-        const token = generateToken(email)
+            const hashedPassword = userExisting.password
+            const result = await compare(password, hashedPassword)
+            if (!result) throw new CustomError("비밀번호가 일치하지 않습니다.")
 
-        // return jwt
-        res.status(200).json({ message: "Login Success", token: bearer.concat(token) })
+            // create jwt
+            const bearer = 'bearer '
+            const token = generateToken(email)
+
+            // return jwt
+            res.json({ message: "Login Success", token: bearer.concat(token), status: 200, user: userExisting })
+        } catch (err) {
+            res.status(401).json({ err: err.message })
+        }
 
     }).catch(err => console.log("db err: ", err))
 })
