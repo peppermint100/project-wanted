@@ -16,7 +16,6 @@ const router = express.Router()
 
 router.post('/', (req, res) => {
     const { email, token } = req.headers
-    console.log(email, token)
     db.then(async connection => {
         try {
             const userExisting = await User.findOne({ email: email.toString() })
@@ -43,6 +42,8 @@ router.post('/', (req, res) => {
 router.post('/signup', (req, res) => {
     const { username, email, password, confirmPassword, role, skills, description }: registerRequest = req.body;
 
+    const clearedSkills = skills.filter(skill => skill !== "")
+
     db.then(async connection => {
         // username check
         const usernameExistingCount = await User.findAndCount({ where: { username } })
@@ -60,7 +61,7 @@ router.post('/signup', (req, res) => {
         if (hashedPassword === null) { throw new CustomError("동일한 유저 이메일이 존재합니다") }
 
         //save to db
-        const newUser = await User.create({ username, email, password: hashedPassword, role, skills, description }).save();
+        const newUser = await User.create({ username, email, password: hashedPassword, role, skills: clearedSkills, description }).save();
 
         res.json({ message: "You are successfully registered!", newUser, status: 200 })
     }).catch(err => res.status(400).json({ err: err.message }))

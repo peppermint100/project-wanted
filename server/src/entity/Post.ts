@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, ManyToOne, JoinColumn, OneToMany } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, ManyToOne, JoinColumn, OneToMany, CreateDateColumn } from "typeorm";
 import { User, Application } from ".";
 
 @Entity()
@@ -44,4 +44,7 @@ export default class Post extends BaseEntity {
 
     @OneToMany(() => Application, application => application.post)
     applications: Application[]
+
+    @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
+    public createdAt: Date;
 }
