@@ -94,7 +94,6 @@ router.get("/postdetail/:postId", (req, res) => {
     db.then(async connection => {
         const postFound = await Post.findAndCount({ postId: parseInt(postId) })
         if (postFound[1] !== 1) res.status(404).json({ message: "There's no Post" }).end()
-
         res.status(200).json({ message: "Here's Your Post!", post: postFound[0][0] }).end()
     })
 })

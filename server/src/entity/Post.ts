@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, ManyToOne, JoinColumn, OneToMany, CreateDateColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, AfterLoad } from "typeorm";
 import { User, Application } from ".";
 
 @Entity()
@@ -30,9 +30,6 @@ export default class Post extends BaseEntity {
     @Column({ default: 0 })
     designRecruited: number;
 
-    @Column({ default: false })
-    isDone: boolean;
-
     @Column("simple-array")
     wantedSkills: string[];
 
@@ -47,4 +44,20 @@ export default class Post extends BaseEntity {
 
     @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP(6)" })
     public createdAt: Date;
+
+    isDone: boolean
+
+    @AfterLoad()
+    getIsDone(): void {
+        if (
+            this.devNeeded <= this.devRecruited &&
+            this.designNeeded <= this.designRecruited &&
+            this.pmNeeded <= this.pmRecruited
+        ) {
+            this.isDone = true;
+        }
+
+        this.isDone = false;
+    }
 }
+

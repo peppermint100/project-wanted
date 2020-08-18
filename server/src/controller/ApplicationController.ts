@@ -45,45 +45,51 @@ router.post("/delete", (req, res) => {
 
 // accept application
 router.post("/accept", (req, res) => {
-    const { applicationId, postId, userId } = req.body
+    const { applicationId, postId, role } = req.body
+    console.log("appId: ", applicationId)
+    console.log("postId: ", postId)
     db.then(async connection => {
-        const user = await User.findOne({ userId: parseInt(userId) })
-        const post = await Post.findOne({ postId: parseInt(postId) })
-        const userRole = user.role
-        switch (userRole) {
-            case Role.DESIGNER:
-                if (post.designRecruited >= post.designNeeded) {
-                    res.status(406).json({ message: `There's already enough ${Role.DESIGNER}` }).end()
+        const userRole = role
+        try {
+            const post = await Post.findOne({ postId })
+            console.log('userRole: ', userRole)
+            switch (userRole) {
+                case Role.DESIGNER:
+                    if (post.designRecruited >= post.designNeeded) {
+                        throw new CustomError(`이미 디자이너 모집이 완료된 공고입니다.`)
+                        return;
+                    } else {
+                        await Post.update({ postId }, { designRecruited: post.designRecruited + 1 })
+                        res.status(200).json({ message: `You have accepted a ${userRole}` })
+                        await Application.update({ applicationId }, { isAccepted: true })
+                        return;
+                    }
+                case Role.DEVELOPER:
+                    if (post.devRecruited >= post.devNeeded) {
+                        throw new CustomError(`이미 개발자 모집이 완료된 공고입니다.`)
+                        return;
+                    } else {
+                        await Post.update({ postId }, { devRecruited: post.devRecruited + 1 })
+                        await Application.update({ applicationId }, { isAccepted: true })
+                        res.status(200).json({ message: `You have accepted a ${userRole}` })
+                        return;
+                    }
+                case Role.PROJECTMANAGER:
+                    if (post.pmRecruited >= post.pmNeeded) {
+                        throw new CustomError(`이미 기획자 모집이 완료된 공고입니다.`)
+                        return;
+                    } else {
+                        await Post.update({ postId }, { pmRecruited: post.pmRecruited + 1 })
+                        await Application.update({ applicationId }, { isAccepted: true })
+                        res.status(200).json({ message: `You have accepted a ${userRole}` })
+                        return;
+                    }
+                default:
+                    throw new CustomError("서버 오류가 발생했습니다.")
                     return;
-                } else {
-                    await Post.update({ postId }, { designRecruited: post.designRecruited + 1 })
-                    res.status(200).json({ message: `You have accepted a ${userRole}` })
-                    await Application.update({ applicationId }, { isAccepted: true })
-                    return;
-                }
-            case Role.DEVELOPER:
-                if (post.devRecruited >= post.devNeeded) {
-                    res.status(406).json({ message: `There's already enough ${Role.DEVELOPER}` }).end()
-                    return;
-                } else {
-                    await Post.update({ postId }, { devRecruited: post.devRecruited + 1 })
-                    await Application.update({ applicationId }, { isAccepted: true })
-                    res.status(200).json({ message: `You have accepted a ${userRole}` })
-                    return;
-                }
-            case Role.PROJECTMANAGER:
-                if (post.pmRecruited >= post.pmNeeded) {
-                    res.status(406).json({ message: `There's already enough ${Role.PROJECTMANAGER}` }).end()
-                    return;
-                } else {
-                    await Post.update({ postId }, { pmRecruited: post.pmRecruited + 1 })
-                    await Application.update({ applicationId }, { isAccepted: true })
-                    res.status(200).json({ message: `You have accepted a ${userRole}` })
-                    return;
-                }
-            default:
-                res.status(406).json({ message: "You have failed to apply" }).end()
-                return;
+            }
+        } catch (err) {
+            if (err) res.status(406).json({ message: err.message })
         }
     })
 })
